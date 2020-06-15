@@ -19,4 +19,24 @@ router.post("/register", (req, res) => {
     .catch((err) => res.send(err));
 });
 
+router.post("/login", (req, res) => {
+  // validate the body, to make sure there is a username and password.
+  const { username, password } = req.body;
+
+  // verify user passwordjs
+
+  Users.findBy({ username })
+    .then(([user]) => {
+      //   console.log("user:", user);
+      if (user && bcryptjs.compareSync(password, user.password)) {
+        res.status(200).json({ welcome: user.username, session: req.session });
+      } else {
+        res.status(401).json({ you: "cannot pass" });
+      }
+    })
+    .catch((err) => {
+      console.log("error on login", err);
+      res.status(500).send(err);
+    });
+});
 module.exports = router;
