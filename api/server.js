@@ -4,6 +4,9 @@ const express = require("express");
 const usersRouter = require("../users/users-router.js");
 const authRouter = require("../auth/auth-router.js");
 const session = require("express-session"); // install this library
+const KnexSessionStore = require("connect-session-knex")(session); // install library
+const requiresAuth = require("../auth/requires-auth.js");
+const dbConnection = require("../database/connection.js");
 //server
 const server = express();
 
@@ -17,13 +20,20 @@ const sessionConfig = {
   },
   resave: false,
   saveUninitialized: true, // GDPR compliance, read the docs
+  store: new KnexSessionStore({
+    knex: dbConnection,
+    tablename: "sessions",
+    sidfieldname: "sid",
+    createtable: true,
+    clearInterval: 6000, // delete expired sessions - in milliseconds
+  }),
 };
 
 //middleware
 server.use(express.json());
 server.use(session(sessionConfig)); // turn on sessions
 //routers
-server.use("/api/users", usersRouter);
+server.use("/api/users", requiresAuth, usersRouter);
 server.use("/api/auth", authRouter);
 
 module.exports = server;
